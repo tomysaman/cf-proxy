@@ -7,7 +7,7 @@
         "heapSize":256,
         "minHeapSize":128,
         "args":[
-            "-Dau.com.centernet.cfproxy.environment=production"
+            "-Dau.com.tomy.cfproxy.environment=production"
         ]
     },
     "web":{

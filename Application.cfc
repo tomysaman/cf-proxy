@@ -117,9 +117,9 @@ component extends="lib.fw1.one" output="false" {
 			return local.environmentVariableValue;
 		}
 
-		// OPTION 2: Using Java system property - property name "au.com.centernet.cfproxy.environment"
-		// Example: Put this in JVM config: "-Dau.com.centernet.cfproxy.environment=development"
-		local.systemPropertyName = "au.com.centernet.cfproxy.environment";
+		// OPTION 2: Using Java system property - property name "au.com.tomy.cfproxy.environment"
+		// Example: Put this in JVM config: "-Dau.com.tomy.cfproxy.environment=development"
+		local.systemPropertyName = "au.com.tomy.cfproxy.environment";
 		local.systemPropertyValue = local.javaSystem.getProperty(local.systemPropertyName);
 		if ( structKeyExists(local, "systemPropertyValue") and listFindNoCase("development,testing,production", local.systemPropertyValue) ) {
 			writeLog(file="app", text="Selecting environment from jvm property: #local.systemPropertyName# = #local.systemPropertyValue#");
@@ -207,7 +207,7 @@ component extends="lib.fw1.one" output="false" {
 			dateFormatDatepicker = "dd/mm/yy", // The date picker JS date format - usually use yy instead of yyyy for full year
 			dateFormatDisplay = "dd mmm yyyy", // Date format for displaying a date
 			systemEmails = {
-				"error" = { to="errors@centernet.com.au", subject="#this.appName# (#this.environment#) error", from="errors@centernet.com.au", fromName="errors@centernet.com.au" }
+				"error" = { to="errors@yourdomain.com.au", subject="#this.appName# (#this.environment#) error", from="errors@yourdomain.com.au", fromName="errors@yourdomain.com.au" }
 			},
 			pw = "Centerne7" // A secret for hidden admin functions/pages
 		};
