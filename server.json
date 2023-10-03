@@ -1,0 +1,23 @@
+{
+    "name":"cfproxy",
+    "app":{
+        "cfengine":"lucee@5.4.3+2"
+    },
+    "JVM":{
+        "heapSize":256,
+        "minHeapSize":128,
+        "args":[
+            "-Dau.com.centernet.cfproxy.environment=production"
+        ]
+    },
+    "web":{
+        "host":"localhost",
+        "http":{
+            "port":"65080"
+        },
+        "SSL":{
+            "enable":false
+        }
+    },
+    "openbrowser":false
+}

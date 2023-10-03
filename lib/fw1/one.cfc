@@ -769,6 +769,9 @@ component {
         var _data_fw1 = 0;
         var once = { };
         var n = 0;
+        // ***** CUSTOM LOGIC - Add ability to render binary content
+        // Set outputAsBinary default value, which is false
+        var outputAsBinary = false;
 
         request._fw1.controllerExecutionStarted = true;
         try {
@@ -800,6 +803,11 @@ component {
 
         if ( structKeyExists( request._fw1, 'renderData' ) ) {
             out = renderDataWithContentType();
+            // ***** CUSTOM LOGIC - Add ability to render binary content
+            // If outputAsBinary is passed in in fw1.renderData(), use its value. Otherwise outputAsBinary will be the default value which is false
+            if ( structKeyExists( request._fw1.renderData, 'outputAsBinary' ) ) {
+                outputAsBinary = request._fw1.renderData.outputAsBinary;
+            }
         } else {
             buildViewQueue();
             internalFrameworkTrace( 'setupView() called' );
@@ -826,7 +834,16 @@ component {
                 out = internalLayout( request._fw1.layouts[i], out );
             }
         }
-        writeOutput( out );
+
+        // ***** CUSTOM LOGIC - Add ability to render binary content
+        // If the output content is binary and outputAsBinary is true, use cfcontent to serve out the binary content
+        if ( isBinary(out) && outputAsBinary ) {
+            writeLog(text="using cfcontent for binary content output", file="fw1");
+            cfcontent(reset=true, variable=out);
+        } else {
+            writeOutput( out );
+        }
+
         setupResponseWrapper();
     }
 
@@ -1059,8 +1076,10 @@ component {
     }
 
     // call this to render data rather than a view and layouts
-    public void function renderData( string type, any data, numeric statusCode = 200 ) {
-        request._fw1.renderData = { type = type, data = data, statusCode = statusCode };
+    // ***** CUSTOM LOGIC - Add ability to render binary content
+    // Add outputAsBinary argument to renderData() function
+    public void function renderData( string type, any data, numeric statusCode = 200, boolean outputAsBinary = false ) {
+        request._fw1.renderData = { type = type, data = data, statusCode = statusCode, outputAsBinary = outputAsBinary };
     }
 
     /*
@@ -1846,10 +1865,31 @@ component {
         var type = request._fw1.renderData.type;
         var data = request._fw1.renderData.data;
         var statusCode = request._fw1.renderData.statusCode;
+        
+        // ***** CUSTOM LOGIC - Review and re-add them if needed when migrating to a new FW1 version
+        // Sometimes the content type value passed in does not align with the content itself (e.g. the content is a xml but content type is set to be json, which will make the xml to be serialised as JSON, resulting in CF error), so here we will override the content type if we can confirm its type by looking at the content
+        try {
+            if ( isXML( data ) && type != 'xml' ) {
+                writelog(file="fw1", text="renderDataWithContentType(): Content is xml, but renderDataType is #type#, overriding it to be xml.");
+                type = 'xml';
+            } else if ( isBinary( data ) && type != 'binary' ) {
+                //writelog(file="fw1", text="renderDataWithContentType(): Content is binary, but renderDataType is #type#, overriding it to be binary.");
+                //type = 'binary';
+            }
+        } catch ( any e ) {
+            writelog(file="fw1", text="renderDataWithContentType(): Error checking the type of content, skipping the logic");
+        }
+        
         switch ( type ) {
         case 'json':
             contentType = 'application/json; charset=utf-8';
-            out = serializeJSON( data );
+            // ***** CUSTOM LOGIC - Review and re-add them if needed when migrating to a new FW1 version
+            // Avoid double JSON serialisation, don't do serialisation if data is already a json
+            if ( isJSON( data ) ) {
+                out = data;
+            } else {
+                out = serializeJSON( data );
+            }
             break;
         case 'xml':
             contentType = 'text/xml; charset=utf-8';
@@ -1871,21 +1911,30 @@ component {
             contentType = 'text/plain; charset=utf-8';
             out = data;
             break;
+        // ***** CUSTOM LOGIC - Add ability to render binary content
+        // Add binary content type and use the proper contentType value for binary output
+        case 'binary':
+            contentType = 'application/octet-stream';
+            out = data;
+            break;
         default:
             throw( type = 'FW1.UnsupportedRenderType',
                    message = 'Only JSON, XML, and TEXT are supported',
                    detail = 'renderData() called with unknown type: ' & type );
             break;
         }
+
+        // ***** CUSTOM LOGIC - Review and re-add them if needed when migrating to a new FW1 version
         /* The line below is a fix I need but has been reverted in later versions of FW1 - TODO: revert if it cause issues
             See: https://github.com/framework-one/fw1/pull/342
             * I need <cfcontent reset="yes"> when doing renderData to remove all the whitespace before the output data
                 - note: cfscript support of <cfcontent> is only for Lucee, it will fail in ACF
             * It may cause issue on session cookie or content header, see: https://github.com/framework-one/fw1/issues/361
-                - It should not affect this application (ebook manager), if it does then revert this change
+                - It should not affect this application (cfproxy), if it does then revert this change
                 - In that case, we will turn on whitespace management in Lucee server to acheive <cfcontent reset="yes">
         */
         content reset="yes";
+
         getPageContext().getResponse().setStatus( statusCode );
         // set the content type header portably:
         getPageContext().getResponse().setContentType( contentType );
