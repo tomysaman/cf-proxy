@@ -345,7 +345,7 @@ component extends="lib.fw1.one" output="false" {
 			}
 			local.msg = local.msg & " | #local.trace#";
 		}
-		writeLog(file="app", text="#local.msg#");
+		writeLog(file="error", text="#local.msg#");
 	}
 
 	public any function setFormVars( struct rc={} ) hint="Copy the form variables into a structure under rc scope (so it will be easier to pass it around - especially when used in fw1's redirect function)" {
