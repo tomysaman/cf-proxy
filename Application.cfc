@@ -42,7 +42,7 @@ component extends="lib.fw1.one" output="false" {
 		externalGeneralEntities = false, // Default is false
 		secure = true, // Default is true
 		disallowDoctypeDecl = false // Default is true, but XML with DTD will be blocked, so set it to false for more compatibility over security
-	}
+	};
 
 	this.webRoot = getDirectoryFromPath(getBaseTemplatePath()); // This is our htdocs/wwwroot folder, where Application.cfc and index.cfm are at
 	this.appRoot = this.webRoot & "app/"; // This is our app folder where all controllers/models/beans/services are at
