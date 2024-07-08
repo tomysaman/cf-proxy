@@ -95,8 +95,10 @@ component accessors=true {
 		// Do the same method, fallback to GET if not present
 		if ( StructKeyExists(requestData, "method") ) {
 			httpService.setMethod(requestData.method);
+			writeLog(text="[#request.requestID#] Set method to #requestData.method#", file="proxy");
 		} else {
 			httpService.setMethod("GET");
+			writeLog(text="[#request.requestID#] Set method (fallback) to GET", file="proxy");
 		}
 		// Relay the headers (except those used by our proxy and those may cause issue if we relay them)
 		StructDelete(requestData.headers, UrlHeaderName);
